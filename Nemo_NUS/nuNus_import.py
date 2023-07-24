@@ -1,10 +1,13 @@
 from struct import unpack
-import bpy        
+import bpy
+import bmesh
 
-def ReadNUS_pointclouds_one(f, vertices=[]):
+def ReadNUS_pointclouds_one(f, vertices=[], edges=[]):
     f.seek(0)
     ChunkRead = f.read()
     f.seek(0)
+    ea=-1
+    eb=0
     for i in range(len(ChunkRead)):
         Chunk = f.read(4)
         if Chunk == b"0TSG":
@@ -27,122 +30,18 @@ def ReadNUS_pointclouds_one(f, vertices=[]):
                         uvy = unpack(">f", f.read(4))[0]
                         vertices.append([vx,vy,vz])
 
-                    readOne = f.read(60)
-                    f.seek(-60,1)
-                    if len(readOne) == 60:
+                    f.seek(16,1)
+                    FaceSize = unpack(">I", f.read(4))[0]
+                    f.seek(FaceSize,1)
+                    f.seek(1,1)
+                    for i in range(vertexCount-1):
+                        ea+=1
+                        eb+=1
+                        edges.append([ea,eb])
                         
-                        f.seek(16,1)
-                        FaceSize = unpack(">I", f.read(4))[0]
-                        Facetype_ = unpack("B", f.read(1))[0]
-                        if Facetype_ == 0:
-                            f.seek(1,1) # eight
-                            f.seek(1,1) # 0xA0 flag
-                            ############
-                            #zero
-                            f.seek(1,1)
-                            f.seek(1,1)
-                            f.seek(1,1)
-                            f.seek(1,1)
-                            #############
-                            f.seek(1,1) # eight
-                            f.seek(1,1) # 0xB0 flag
-                            #############
-                            #zero
-                            f.seek(1,1)
-                            f.seek(1,1)
-                            f.seek(1,1)
-                            #############
-                            repeatedfafbfc = unpack("B", f.read(1))[0]
-                            if repeatedfafbfc == 36:
-                                f.seek(1,1) # eight
-                                f.seek(1,1) # 0xA2 flag
-                                ###########
-                                #zero
-                                f.seek(1,1)
-                                f.seek(1,1)
-                                f.seek(1,1)
-                                f.seek(1,1)
-                                ############
-                                f.seek(1,1) # eight
-                                f.seek(1,1) # 0xB2 flag
-                                ############
-                                #zero
-                                f.seek(1,1)
-                                f.seek(1,1)
-                                f.seek(1,1)
-                            elif repeatedfafbfc == 24:
-                                f.seek(1,1) # eight
-                                f.seek(1,1) # 0xA2 flag
-                                ###########
-                                #zero
-                                f.seek(1,1)
-                                f.seek(1,1)
-                                f.seek(1,1)
-                                f.seek(1,1)
-                                ############
-                                f.seek(1,1) # eight
-                                f.seek(1,1) # 0xB2 flag
-                                ############
-                                #zero
-                                f.seek(1,1)
-                                f.seek(1,1)
-                                f.seek(1,1)
-                        elif Facetype_ == 1:
-                            f.seek(1,1) # eight
-                            f.seek(1,1) # 0xA0 flag
-                            ############
-                            #zero
-                            f.seek(1,1)
-                            f.seek(1,1)
-                            f.seek(1,1)
-                            f.seek(1,1)
-                            #############
-                            f.seek(1,1) # eight
-                            f.seek(1,1) # 0xB0 flag
-                            #############
-                            #zero
-                            f.seek(1,1)
-                            f.seek(1,1)
-                            f.seek(1,1)
-                            #############
-                            repeatedfafbfc = unpack("B", f.read(1))[0]
-                            if repeatedfafbfc == 36:
-                                f.seek(1,1) # eight
-                                f.seek(1,1) # 0xA2 flag
-                                ###########
-                                #zero
-                                f.seek(1,1)
-                                f.seek(1,1)
-                                f.seek(1,1)
-                                f.seek(1,1)
-                                ############
-                                f.seek(1,1) # eight
-                                f.seek(1,1) # 0xB2 flag
-                                ############
-                                #zero
-                                f.seek(1,1)
-                                f.seek(1,1)
-                                f.seek(1,1)
-                            elif repeatedfafbfc == 24:
-                                f.seek(1,1) # eight
-                                f.seek(1,1) # 0xA2 flag
-                                ###########
-                                #zero
-                                f.seek(1,1)
-                                f.seek(1,1)
-                                f.seek(1,1)
-                                f.seek(1,1)
-                                ############
-                                f.seek(1,1) # eight
-                                f.seek(1,1) # 0xB2 flag
-                                ############
-                                #zero
-                                f.seek(1,1)
-                                f.seek(1,1)
-                                f.seek(1,1)
-                            
+                                                            
     mesh = bpy.data.meshes.new("dragonjan")
-    mesh.from_pydata(vertices, [], [])
+    mesh.from_pydata(vertices, edges, [])
     object = bpy.data.objects.new("dragonjan", mesh)
     bpy.context.collection.objects.link(object)
 
