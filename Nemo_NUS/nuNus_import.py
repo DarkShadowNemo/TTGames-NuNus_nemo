@@ -2,12 +2,10 @@ from struct import unpack
 import bpy
 import bmesh
 
-def ReadNUS_pointclouds_one(f, vertices=[], edges=[]):
+def ReadNUS_pointclouds_one(f, vertices=[], faces=[]):
     f.seek(0)
     ChunkRead = f.read()
     f.seek(0)
-    ea=-1
-    eb=0
     for i in range(len(ChunkRead)):
         Chunk = f.read(4)
         if Chunk == b"0TSG":
@@ -32,19 +30,23 @@ def ReadNUS_pointclouds_one(f, vertices=[], edges=[]):
 
                     f.seek(16,1)
                     FaceSize = unpack(">I", f.read(4))[0]
-                    f.seek(FaceSize,1)
+                    #facecount loop
+                    #for i in range(facecount-2):
+                    fa = unpack(">H", f.read(2))[0] >> 8
                     f.seek(1,1)
-                    for i in range(vertexCount-1):
-                        ea+=1
-                        eb+=1
-                        edges.append([ea,eb])
+                    fb = unpack(">H", f.read(2))[0] >> 8
+                    f.seek(1,1)
+                    fc = unpack(">H", f.read(2))[0] >> 8
+                    f.seek(1,1)
+                    f.seek(-4,1)
+                    #needs a loop
                         
                                                             
     mesh = bpy.data.meshes.new("dragonjan")
-    mesh.from_pydata(vertices, edges, [])
+    mesh.from_pydata(vertices, [], [])
     object = bpy.data.objects.new("dragonjan", mesh)
     bpy.context.collection.objects.link(object)
 
 def NUSRead(filepath):
     with open(filepath, "rb") as f:
-        ReadNUS_pointclouds_one(f, vertices=[])
+        ReadNUS_pointclouds_one(f, vertices=[], faces=[])
