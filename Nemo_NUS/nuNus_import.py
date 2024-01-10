@@ -13,6 +13,7 @@ rgba=[]
 txlist=[]
 materials=[]
 texanim_structs = []
+msh_offsets = []
 
 #returns not working width is not defined even though i did define it so you might have to add texture manually
 
@@ -133,6 +134,7 @@ def ReadNUS(f):
     global lbtnsize1
     global lbtnsize2
     global CSGFileSize
+    global TSTSize1
     f.seek(0)
     ChunkRead = f.read()
     f.seek(0)
@@ -159,14 +161,11 @@ def ReadNUS(f):
             TXMLen = unpack(">I", f.read(4))[0]
 
             if TXMType == 0x80:
-                imgtexture = dxt1nemo_to_rgba(f, TXMWidth, TXMHeight)
-                bimg = bpy.data.images.new("NUS Image", width=TXMWidth, height=TXMHeight)
+                pass
             elif TXMType == 0x81:
-                imgtexture = rgb5a3nemo_to_rgba(f, TXMWidth, TXMHeight)
-                bimg = bpy.data.images.new("NUS Image", width=TXMWidth, height=TXMHeight)
+                pass
             elif TXMType == 0x82:
-                imgtexture = chunk64nemo_to_rgba(f, TXMWidth, TXMHeight)
-                bimg = bpy.data.images.new("NUS Image", width=TXMWidth, height=TXMHeight)
+                pass
             
         elif Chunk == b"0TSG":
             FileSize = unpack(">I", f.read(4))[0]
@@ -208,7 +207,7 @@ def ReadNUS(f):
                     unpack("B", f.read(1))[0]
                     unpack(">H", f.read(2))[0]
                     unpack("B", f.read(1))[0]
-                    faceCountSize = unpack(">H", f.read(2))[0]+1
+                    faceCountSize = unpack(">H", f.read(2))[0]
                     faceType = unpack("B", f.read(1))[0]
                     for i in range(faceCountSize):
                         if faceType == 0:
@@ -224,21 +223,27 @@ def ReadNUS(f):
                                    f.seek(2,1)
                                    f.seek(-12,1)
                                    faces.append([fa,fb,fc])
+                               f.seek(12,1)
                         elif faceType == 1:
                             data = unpack(">H", f.read(2))[0]
                             if data == 0x9800:
-                                facecount = unpack("B", f.read(1))[0]
-                                for i in range(facecount-2):
-                                    fa = unpack(">H", f.read(2))[0]>>8
-                                    f.seek(1,1)
-                                    fb = unpack(">H", f.read(2))[0]>>8
-                                    f.seek(1,1)
-                                    fc = unpack(">H", f.read(2))[0]>>8
-                                    f.seek(1,1)
-                                    f.seek(-6,1)
-                                    faces.append([fa,fb,fc])
+                               facecount = unpack("B", f.read(1))[0]
+                               for i in range(facecount-2):
+                                   fa = unpack(">H", f.read(2))[0]>>8
+                                   f.seek(1,1)
+                                   fb = unpack(">H", f.read(2))[0]>>8
+                                   f.seek(1,1)
+                                   fc = unpack(">H", f.read(2))[0]>>8
+                                   f.seek(1,1)
+                                   f.seek(-6,1)
+                                   faces.append([fa,fb,fc])
+                               f.seek(6,1)
+                    for i in range(faceCountSize):
+                        #todo go backwards in a loop
+                        pass
                 elif type1 == 10:
                     pass
+            break
     mesh = bpy.data.meshes.new("0")
     mesh.from_pydata(vertices, [], faces)
     object = bpy.data.objects.new("0", mesh)
@@ -264,12 +269,18 @@ def ReadNUS(f):
 
 def WriteNUS(f):
     f.write(b"0CSG")
-    f.write(pack(">I", CSGFileSize-CSGFileSize+4+4+4+4+4+lbtnsize2-12))
+    f.write(pack(">I", CSGFileSize))
     f.write(b"LBTN")
     f.write(pack(">I", lbtnsize1)) # hardcoded
     f.write(pack(">I", lbtnsize2)) # hardcoded
     for i in range(lbtnsize1-12):
         f.write(pack("B", 0)) # hardcoded
+    f.write(b"0TST")
+    f.write(pack(">I", TSTSize1))
+    
+        
+    
+        
     
 def NUSRead(filepath):
     with open(filepath, "rb") as f:
