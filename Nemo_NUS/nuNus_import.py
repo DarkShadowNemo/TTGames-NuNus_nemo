@@ -135,6 +135,16 @@ def ReadNUS(f):
     global lbtnsize2
     global CSGFileSize
     global TSTSize1
+    global hstSize1
+    global MaterialSize
+    global MaterialCount
+    global null1_
+    global MaterialHexID
+    global NuObjCount
+    global models_n
+    global VertexCount
+    global TXMWidth
+    global TXMHeight
     f.seek(0)
     ChunkRead = f.read()
     f.seek(0)
@@ -161,15 +171,18 @@ def ReadNUS(f):
             TXMLen = unpack(">I", f.read(4))[0]
 
             if TXMType == 0x80:
-                pass
+                nus_img = bpy.data.images.new("NUS Image", width=TXMWidth, height=TXMHeight, alpha=True)
             elif TXMType == 0x81:
-                pass
+                nus_img = bpy.data.images.new("NUS Image", width=TXMWidth, height=TXMHeight, alpha=True)
             elif TXMType == 0x82:
-                pass
+                nus_img = bpy.data.images.new("NUS Image", width=TXMWidth, height=TXMHeight, alpha=True)
+            
             
         elif Chunk == b"0TSG":
             FileSize = unpack(">I", f.read(4))[0]
             ObjectCount = unpack(">I", f.read(4))[0]
+            f.seek(-4,1)
+            NuObjCount = unpack(">I", f.read(4))[0]
             for i in range(ObjectCount-ObjectCount+1):
                 
                 models_n = unpack(">I", f.read(4))[0]
@@ -238,9 +251,6 @@ def ReadNUS(f):
                                    f.seek(-6,1)
                                    faces.append([fa,fb,fc])
                                f.seek(6,1)
-                    for i in range(faceCountSize):
-                        #todo go backwards in a loop
-                        pass
                 elif type1 == 10:
                     pass
             break
@@ -269,7 +279,7 @@ def ReadNUS(f):
 
 def WriteNUS(f):
     f.write(b"0CSG")
-    f.write(pack(">I", CSGFileSize))
+    f.write(pack(">I", CSGFileSize)) # not hardcoded
     f.write(b"LBTN")
     f.write(pack(">I", lbtnsize1)) # hardcoded
     f.write(pack(">I", lbtnsize2)) # hardcoded
@@ -277,6 +287,17 @@ def WriteNUS(f):
         f.write(pack("B", 0)) # hardcoded
     f.write(b"0TST")
     f.write(pack(">I", TSTSize1))
+    f.write(b"0HST")
+    f.write(pack(">I", hstSize1))
+    f.write(pack(">I", TextureCount))
+    if TextureCount != False:
+        for i in range(TextureCount):
+            f.write(b"0MXT")
+            f.write(pack(">I", TXMSize))
+            f.write(pack(">I", TXMType))
+            f.write(pack(">I", TXMWidth))
+            f.write(pack(">I", TXMHeight))
+            f.write(pack(">I", TXMLen))
     
         
     
