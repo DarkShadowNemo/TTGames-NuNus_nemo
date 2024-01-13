@@ -5,6 +5,7 @@ from math import tan, atan
 import bmesh
 import mathutils
 from io import BytesIO as bio
+import os
 
 vertices=[]
 faces=[]
@@ -14,6 +15,8 @@ txlist=[]
 materials=[]
 texanim_structs = []
 msh_offsets = []
+texbytes = []
+resting = []
 
 #returns not working width is not defined even though i did define it so you might have to add texture manually
 
@@ -126,7 +129,7 @@ def chunk64nemo_to_rgba(chunk64data, width, height):
     
     
 
-def ReadNUS(f):
+def ReadNUS(f, filepath):
     global TextureCount
     global TXMSize
     global TXMType
@@ -145,6 +148,27 @@ def ReadNUS(f):
     global VertexCount
     global TXMWidth
     global TXMHeight
+    global byte1_
+    global null2_
+    global null3_
+    global null4_
+    global red
+    global green
+    global blue
+    global null5_
+    global null6_
+    global null7_
+    global null8_
+    global floatF1
+    global floatF2
+    global materialIndex
+    global unk1_m
+    global unk2_m
+    global unk3_m
+    global unk4_m
+    global unk5_m
+    global unk6_m
+    global rest_
     f.seek(0)
     ChunkRead = f.read()
     f.seek(0)
@@ -160,22 +184,38 @@ def ReadNUS(f):
                 f.seek(1,1)
             tst = f.read(4)
             TSTSize1 = unpack(">I", f.read(4))[0]
-            hst = f.read(4)
-            hstSize1 = unpack(">I", f.read(4))[0]
-            TextureCount = unpack(">I", f.read(4))[0]
-        elif Chunk == b"0MXT":
-            TXMSize = unpack(">I", f.read(4))[0]
-            TXMType = unpack(">I", f.read(4))[0]
-            TXMWidth = unpack(">I", f.read(4))[0]
-            TXMHeight = unpack(">I", f.read(4))[0]
-            TXMLen = unpack(">I", f.read(4))[0]
+            for i in range(TSTSize1-8):
+                rest_ = unpack("B", f.read(1))[0]
+                resting.append([rest_])
 
-            if TXMType == 0x80:
-                nus_img = bpy.data.images.new("NUS Image", width=TXMWidth, height=TXMHeight, alpha=True)
-            elif TXMType == 0x81:
-                nus_img = bpy.data.images.new("NUS Image", width=TXMWidth, height=TXMHeight, alpha=True)
-            elif TXMType == 0x82:
-                nus_img = bpy.data.images.new("NUS Image", width=TXMWidth, height=TXMHeight, alpha=True)
+        elif Chunk == b"30SM":
+            MaterialSize = unpack(">I", f.read(4))[0]
+            MaterialCount = unpack(">I", f.read(4))[0]
+            null1_ = unpack(">I", f.read(4))[0]
+            MaterialHexID = unpack(">I", f.read(4))[0]
+            null2_ = unpack(">I", f.read(4))[0]
+            null3_ = unpack(">I", f.read(4))[0]
+            null4_ = unpack(">I", f.read(4))[0]
+            red = unpack(">f", f.read(4))[0]
+            green = unpack(">f", f.read(4))[0]
+            blue = unpack(">f", f.read(4))[0]
+            null5_ = unpack(">I", f.read(4))[0]
+            null6_ = unpack(">I", f.read(4))[0]
+            null7_ = unpack(">I", f.read(4))[0]
+            null8_ = unpack(">I", f.read(4))[0]
+            floatF1 = unpack(">f", f.read(4))[0]
+            floatF2 = unpack(">f", f.read(4))[0]
+            materialIndex = unpack(">I", f.read(4))[0]
+            unk1_m = unpack(">I", f.read(4))[0]
+            unk2_m = unpack(">I", f.read(4))[0]
+            unk3_m = unpack(">I", f.read(4))[0]
+            unk4_m = unpack(">I", f.read(4))[0]
+            unk5_m = unpack(">I", f.read(4))[0]
+            unk6_m = unpack(">I", f.read(4))[0]
+            mattt = bpy.data.materials.new("NUS Materials")
+            mattt.use_nodes = True
+            mattt.blend_method = 'HASHED'
+        
             
             
         elif Chunk == b"0TSG":
@@ -194,7 +234,7 @@ def ReadNUS(f):
                     unk3 = unpack(">I", f.read(4))[0]
                     unk4 = unpack(">I", f.read(4))[0]
                     VertexCount = unpack(">I", f.read(4))[0]
-                    for i in range(VertexCount):
+                    for c_ in range(VertexCount):
                         vx = unpack(">f", f.read(4))[0]
                         vy = unpack(">f", f.read(4))[0]
                         vz = unpack(">f", f.read(4))[0]
@@ -208,18 +248,18 @@ def ReadNUS(f):
                         rgba.append([r,g,b,a])
                         uvs.append([uvx,uvy])
                                   
-                    unpack(">H", f.read(2))[0]
-                    unpack("B", f.read(1))[0]
-                    unpack(">H", f.read(2))[0]
-                    unpack("B", f.read(1))[0]
-                    unpack(">H", f.read(2))[0]
-                    unpack("B", f.read(1))[0]
-                    unpack(">H", f.read(2))[0]
-                    unpack("B", f.read(1))[0]
-                    unpack(">H", f.read(2))[0]
-                    unpack("B", f.read(1))[0]
-                    unpack(">H", f.read(2))[0]
-                    unpack("B", f.read(1))[0]
+                    a1=unpack(">H", f.read(2))[0]
+                    a2=unpack("B", f.read(1))[0]
+                    a3=unpack(">H", f.read(2))[0]
+                    a4=unpack("B", f.read(1))[0]
+                    a5=unpack(">H", f.read(2))[0]
+                    a6=unpack("B", f.read(1))[0]
+                    a7=unpack(">H", f.read(2))[0]
+                    a8=unpack("B", f.read(1))[0]
+                    a9=unpack(">H", f.read(2))[0]
+                    a10=unpack("B", f.read(1))[0]
+                    a11=unpack(">H", f.read(2))[0]
+                    a12=unpack("B", f.read(1))[0]
                     faceCountSize = unpack(">H", f.read(2))[0]
                     faceType = unpack("B", f.read(1))[0]
                     for i in range(faceCountSize):
@@ -237,6 +277,10 @@ def ReadNUS(f):
                                    f.seek(-12,1)
                                    faces.append([fa,fb,fc])
                                f.seek(12,1)
+                               padding1 = unpack("B", f.read(1))[0]
+                               if padding1 != 0:
+                                  f.seek(-1,1)
+                                  print("incompleted anything equals to it's padding removes the face data in strips")
                         elif faceType == 1:
                             data = unpack(">H", f.read(2))[0]
                             if data == 0x9800:
@@ -251,14 +295,47 @@ def ReadNUS(f):
                                    f.seek(-6,1)
                                    faces.append([fa,fb,fc])
                                f.seek(6,1)
+                               padding1 = unpack("B", f.read(1))[0]
+                               if padding1 != 0:
+                                  f.seek(-1,1)
+                                  print("incompleted anything equals to it's padding removes the face data in strips")
                 elif type1 == 10:
-                    pass
+                    fa=-1
+                    fb=0
+                    fc=1
+                    index1 = unpack(">I", f.read(4))[0]
+                    vertexcount = unpack(">I", f.read(4))[0]
+                    unknown1 = unpack(">I", f.read(4))[0]
+                    unknown2 = unpack(">I", f.read(4))[0]
+                    f.seek(16,1)
+                    for i in range(vertexcount):
+                        vx = unpack(">f", f.read(4))[0]
+                        vy = unpack(">f", f.read(4))[0]
+                        vz = unpack(">f", f.read(4))[0]
+                        uvx = unpack(">f", f.read(4))[0]
+                        uvy = unpack(">f", f.read(4))[0]
+                        r = unpack("B", f.read(1))[0] / 255.0
+                        g = unpack("B", f.read(1))[0] / 255.0
+                        b = unpack("B", f.read(1))[0] / 255.0
+                        a = unpack("B", f.read(1))[0] / 255.0
+                        vertices.append([vx,vz,vy])
+                        rgba.append([r,g,b,a])
+                        uvs.append([uvx,uvy])
+                            
+                    for i in range(vertexcount-2):
+                        fa+=1
+                        fb+=1
+                        fc+=1
+                        faces.append([fa,fb,fc])
+                        
+                        
             break
-    mesh = bpy.data.meshes.new("0")
+    collection = bpy.data.collections.new(os.path.basename(os.path.splitext(filepath)[0]))
+    bpy.context.scene.collection.children.link(collection)
+    mesh = bpy.data.meshes.new(os.path.basename(os.path.splitext(filepath)[0]))
     mesh.from_pydata(vertices, [], faces)
-    object = bpy.data.objects.new("0", mesh)
-    bpy.context.collection.objects.link(object)
-    meshC = mesh.vertex_colors.new()
+    object = bpy.data.objects.new(os.path.basename(os.path.splitext(filepath)[0]), mesh)
+    collection.objects.link(object)
 
     for fac in mesh.polygons:
         fac.use_smooth = True
@@ -271,42 +348,232 @@ def ReadNUS(f):
     for i, coord in enumerate(uvs):
         for li in vert_loops[i]:
             uv_layer[li].uv = coord
-    index=0
-    for vcol in mesh.vertex_colors[0].data:
-        vcol.color = rgba[i]
-        index+=i
-    mesh.vertex_colors.active = meshC
+
+    obj = bpy.data.objects[os.path.basename(os.path.splitext(filepath)[0])]
+    bpy.context.view_layer.objects.active = obj
+
+    colname = "NUS_VERTEXCOLORS"
+
+    colattr = obj.data.color_attributes.new(
+        name=colname,
+        type='FLOAT_COLOR',
+        domain='POINT',
+    )
+
+    for v_index in range(len(obj.data.vertices)):
+        colattr.data[v_index].color = rgba[v_index]
+
+def ReadNUS_Verts(f, filepath):
+    f.seek(0)
+    ChunkRead = f.read()
+    f.seek(0)
+    for i in range(len(ChunkRead)):
+        Chunk = f.read(4)
+        if Chunk == b"0TSG":
+            FileSize_ = unpack(">I", f.read(4))[0]
+            ObjectCount_ = unpack(">I", f.read(4))[0]
+            for i in range(ObjectCount_-ObjectCount_+1):
+                
+                models_n = unpack(">I", f.read(4))[0]
+                f.seek(models_n+3,1)
+                type1 = unpack(">I", f.read(4))[0]
+                unk1 = unpack(">I", f.read(4))[0]
+                unk2 = unpack(">I", f.read(4))[0]
+                unk3 = unpack(">I", f.read(4))[0]
+                unk4 = unpack(">I", f.read(4))[0]
+                VertexCount = unpack(">I", f.read(4))[0]
+                for i in range(VertexCount):
+                    vx = unpack(">f", f.read(4))[0]
+                    vy = unpack(">f", f.read(4))[0]
+                    vz = unpack(">f", f.read(4))[0]
+                    r = unpack("B", f.read(1))[0] / 127.0
+                    g = unpack("B", f.read(1))[0] / 127.0
+                    b = unpack("B", f.read(1))[0] / 127.0
+                    a = unpack("B", f.read(1))[0] / 255.0
+                    uvx = unpack(">f", f.read(4))[0]
+                    uvy = unpack(">f", f.read(4))[0]
+                    vertices.append([vx,vz,vy])
+                                  
+                a1=unpack(">H", f.read(2))[0]
+                a2=unpack("B", f.read(1))[0]
+                a3=unpack(">H", f.read(2))[0]
+                a4=unpack("B", f.read(1))[0]
+                a5=unpack(">H", f.read(2))[0]
+                a6=unpack("B", f.read(1))[0]
+                a7=unpack(">H", f.read(2))[0]
+                a8=unpack("B", f.read(1))[0]
+                a9=unpack(">H", f.read(2))[0]
+                a10=unpack("B", f.read(1))[0]
+                a11=unpack(">H", f.read(2))[0]
+                a12=unpack("B", f.read(1))[0]
+                faceCountSize = unpack(">H", f.read(2))[0]
+                faceType = unpack("B", f.read(1))[0]
+                f.seek(faceCountSize,1)
+            break
+
+    collection = bpy.data.collections.new(os.path.basename(os.path.splitext(filepath)[0]))
+    bpy.context.scene.collection.children.link(collection)
+    mesh = bpy.data.meshes.new(os.path.basename(os.path.splitext(filepath)[0]))
+    mesh.from_pydata(vertices, [], [])
+    object = bpy.data.objects.new(os.path.basename(os.path.splitext(filepath)[0]), mesh)
+    collection.objects.link(object)
+
+def AssignNus_one(f, filepath):
+    f.seek(0)
+    ChunkRead = f.read()
+    f.seek(0)
+    for i in range(len(ChunkRead)):
+        Chunk = f.read(4)
+        if Chunk == b"0TSG":
+            FileSize_ = unpack(">I", f.read(4))[0]
+            ObjectCount_ = unpack(">I", f.read(4))[0]
+            for i in range(ObjectCount_-ObjectCount_+1):
+                
+                models_n = unpack(">I", f.read(4))[0]
+                f.seek(models_n+3,1)
+                type1 = unpack(">I", f.read(4))[0]
+                unk1 = unpack(">I", f.read(4))[0]
+                unk2 = unpack(">I", f.read(4))[0]
+                unk3 = unpack(">I", f.read(4))[0]
+                unk4 = unpack(">I", f.read(4))[0]
+                VertexCount = unpack(">I", f.read(4))[0]
+                for c in range(VertexCount):
+                    vx = unpack(">f", f.read(4))[0]
+                    vy = unpack(">f", f.read(4))[0]
+                    vz = unpack(">f", f.read(4))[0]
+                    r = unpack("B", f.read(1))[0] / 127.0
+                    g = unpack("B", f.read(1))[0] / 127.0
+                    b = unpack("B", f.read(1))[0] / 127.0
+                    a = unpack("B", f.read(1))[0] / 255.0
+                    uvx = unpack(">f", f.read(4))[0]
+                    uvy = unpack(">f", f.read(4))[0]
+                    rgba.append([r,g,b,a])
+                    
+                                  
+                a1=unpack(">H", f.read(2))[0]
+                a2=unpack("B", f.read(1))[0]
+                a3=unpack(">H", f.read(2))[0]
+                a4=unpack("B", f.read(1))[0]
+                a5=unpack(">H", f.read(2))[0]
+                a6=unpack("B", f.read(1))[0]
+                a7=unpack(">H", f.read(2))[0]
+                a8=unpack("B", f.read(1))[0]
+                a9=unpack(">H", f.read(2))[0]
+                a10=unpack("B", f.read(1))[0]
+                a11=unpack(">H", f.read(2))[0]
+                a12=unpack("B", f.read(1))[0]
+                faceCountSize = unpack(">H", f.read(2))[0]
+                faceType = unpack("B", f.read(1))[0]
+                f.seek(faceCountSize,1)
+            break
+
+    obj = bpy.data.objects[os.path.basename(os.path.splitext(filepath)[0])]
+    bpy.context.view_layer.objects.active = obj
+
+    colname = "NUS_VERTEXCOLORS"
+
+    colattr = obj.data.color_attributes.new(
+        name=colname,
+        type='FLOAT_COLOR',
+        domain='POINT',
+    )
+
+    for v_index in range(len(obj.data.vertices)):
+        colattr.data[v_index].color = rgba[v_index]
+
+def AssignNUS_two(f, filepath):
+    obdata = bpy.context.object.data
+    f.seek(0)
+    ChunkRead = f.read()
+    f.seek(0)
+    for i in range(len(ChunkRead)):
+        Chunk = f.read(4)
+        if Chunk == b"0TSG":
+            FileSize_ = unpack(">I", f.read(4))[0]
+            ObjectCount_ = unpack(">I", f.read(4))[0]
+            for i in range(ObjectCount_-ObjectCount_+1):
+                
+                models_n = unpack(">I", f.read(4))[0]
+                f.seek(models_n+3,1)
+                type1 = unpack(">I", f.read(4))[0]
+                unk1 = unpack(">I", f.read(4))[0]
+                unk2 = unpack(">I", f.read(4))[0]
+                unk3 = unpack(">I", f.read(4))[0]
+                unk4 = unpack(">I", f.read(4))[0]
+                VertexCount = unpack(">I", f.read(4))[0]
+                for c in range(VertexCount):
+                    vx = unpack(">f", f.read(4))[0]
+                    vy = unpack(">f", f.read(4))[0]
+                    vz = unpack(">f", f.read(4))[0]
+                    r = unpack("B", f.read(1))[0] / 127.0
+                    g = unpack("B", f.read(1))[0] / 127.0
+                    b = unpack("B", f.read(1))[0] / 127.0
+                    a = unpack("B", f.read(1))[0] / 255.0
+                    uvx = unpack(">f", f.read(4))[0]
+                    uvy = unpack(">f", f.read(4))[0]
+                    uvs.append([uvx,uvy])
+                    
+                                  
+                a1=unpack(">H", f.read(2))[0]
+                a2=unpack("B", f.read(1))[0]
+                a3=unpack(">H", f.read(2))[0]
+                a4=unpack("B", f.read(1))[0]
+                a5=unpack(">H", f.read(2))[0]
+                a6=unpack("B", f.read(1))[0]
+                a7=unpack(">H", f.read(2))[0]
+                a8=unpack("B", f.read(1))[0]
+                a9=unpack(">H", f.read(2))[0]
+                a10=unpack("B", f.read(1))[0]
+                a11=unpack(">H", f.read(2))[0]
+                a12=unpack("B", f.read(1))[0]
+                faceCountSize = unpack(">H", f.read(2))[0]
+                faceType = unpack("B", f.read(1))[0]
+                f.seek(faceCountSize,1)
+            break
+
+    uv_tex = obdata.uv_layers.new()
+    uv_layer = obdata.uv_layers[0].data
+    vert_loops = {}
+    for l in obdata.loops:
+        vert_loops.setdefault(l.vertex_index, []).append(l.index)
+    for i, coord in enumerate(uvs):
+        for li in vert_loops[i]:
+            uv_layer[li].uv = coord
+            
+    
 
 def WriteNUS(f):
     f.write(b"0CSG")
-    f.write(pack(">I", CSGFileSize)) # not hardcoded
+    f.write(pack(">I", CSGFileSize))
     f.write(b"LBTN")
-    f.write(pack(">I", lbtnsize1)) # hardcoded
-    f.write(pack(">I", lbtnsize2)) # hardcoded
+    f.write(pack(">I", lbtnsize1))
+    f.write(pack(">I", lbtnsize2))
     for i in range(lbtnsize1-12):
-        f.write(pack("B", 0)) # hardcoded
+        f.write(pack("B", 0))
     f.write(b"0TST")
     f.write(pack(">I", TSTSize1))
     f.write(b"0HST")
-    f.write(pack(">I", hstSize1))
-    f.write(pack(">I", TextureCount))
-    if TextureCount != False:
-        for i in range(TextureCount):
-            f.write(b"0MXT")
-            f.write(pack(">I", TXMSize))
-            f.write(pack(">I", TXMType))
-            f.write(pack(">I", TXMWidth))
-            f.write(pack(">I", TXMHeight))
-            f.write(pack(">I", TXMLen))
-    
         
     
         
-    
-def NUSRead(filepath):
-    with open(filepath, "rb") as f:
-        ReadNUS(f)
 
-def NUSWrite(filepath):
+    
+        
+    
+        
+    
+def NUSRead(filepath, NUSChunk=False, NUSNoChunk=False, assign_vertexcolors=False, assign_uvs=False):
+    with open(filepath, "rb") as f:
+        if NUSChunk:
+            ReadNUS(f, filepath)
+        if NUSNoChunk:
+            ReadNUS_Verts(f, filepath)
+        if assign_vertexcolors:
+            AssignNus_one(f, filepath)
+        if assign_uvs:
+            AssignNUS_two(f, filepath)
+
+def NUSWrite(filepath, returnNUSChunk=False):
     with open(filepath, "wb") as f:
-        WriteNUS(f)
+        if returnNUSChunk:
+            WriteNUS(f)
