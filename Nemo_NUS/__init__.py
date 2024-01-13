@@ -1,8 +1,8 @@
 bl_info = {
         'name'			: 'Finding Nemo NUS Level NuNus',
 	'author'		: 'DarkShadow Nemo',
-	'version'		: (0, 0, 1),
-	'blender'		: (3, 0, 0),
+	'version'		: (0, 1, 1),
+	'blender'		: (4, 0, 0),
 	'location'		: 'File > Import-Export',
 	'description'           : 'Import NUS and export from the gamecube of finding nemo',
 	'category'		: 'Chunk-Importer and Chunk-Exporter'
@@ -28,11 +28,30 @@ class ImportnuNus(bpy.types.Operator, ImportHelper):
         )
         directory: StringProperty()
         filter_glob: StringProperty(default = '*.nus', options = {'HIDDEN'})
+
+        NUSChunk : BoolProperty(
+                name = "one nus chunk",
+                description = "imports one nus chunk not others since its impossible and takes half of the faces out in face strips"
+        )
+        NUSNoChunk : BoolProperty(
+                name = "one nus chunk verts only",
+                description = "maybe possible to get all nus chunks with verts only"
+        )
+        assign_vertexcolors : BoolProperty(
+                name = "nus vertex col",
+                description = "select your nus this will import the nus vertex colors at the same"
+        )
+        assign_uvs : BoolProperty(
+                name = "nus uvs",
+                description = "select your nus this will import the nus uvs at the same"
+        )
+
+        
         def execute(self, context):
                 paths = [os.path.join(self.directory, name.name) for name in self.files]
                 if not paths: paths.append(self.filepath)
                 importlib.reload(nuNus_import)
-                for path in paths: nuNus_import.NUSRead(path)
+                for path in paths: nuNus_import.NUSRead(path, NUSChunk = self.NUSChunk, NUSNoChunk = self.NUSNoChunk, assign_vertexcolors = self.assign_vertexcolors, assign_uvs = self.assign_uvs)
                 return {'FINISHED'}
 
 class ExportnuNus(bpy.types.Operator, ExportHelper):
@@ -49,9 +68,14 @@ class ExportnuNus(bpy.types.Operator, ExportHelper):
         directory: StringProperty()
         filter_glob: StringProperty(default = '*.nus', options = {'HIDDEN'})
 
+        returnNUSChunk : BoolProperty(
+                name = "one nus chunk",
+                description = "exports one nus chunk by return it back"
+        )
+
         def execute(self, context):
             importlib.reload(nuNus_import)
-            nuNus_import.NUSWrite(self.filepath)
+            nuNus_import.NUSWrite(self.filepath, returnNUSChunk = self.returnNUSChunk)
             return {"FINISHED"}
         
 
